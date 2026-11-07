@@ -1,0 +1,17 @@
+[Unit]
+Description=Consistent Daddu Charger database backup
+After=dc-cms.service
+
+[Service]
+Type=oneshot
+User=dc-cms
+Group=dc-cms
+WorkingDirectory=/var/lib/dc-cms
+Environment=DATABASE_PATH=/var/lib/dc-cms/uocms.sqlite
+ExecStart=/usr/local/bin/node /opt/dc-cms/scripts/backup.js
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dc-cms

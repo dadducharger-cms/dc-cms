@@ -1,0 +1,5 @@
+# Replace with the hostname pointing to this VM. Do not include https:// here.
+support.example.com {
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:3000
+}

@@ -1,0 +1,24 @@
+[Unit]
+Description=Daddu Charger employee portal
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=dc-cms
+Group=dc-cms
+WorkingDirectory=/opt/dc-cms
+EnvironmentFile=/etc/dc-cms.env
+ExecStart=/usr/local/bin/node /opt/dc-cms/server/index.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=45
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/dc-cms
+
+[Install]
+WantedBy=multi-user.target

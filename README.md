@@ -112,3 +112,7 @@ Stored integration credentials are encrypted with `data/integration.key`. Back u
 ## Deploy on Render
 
 Follow [Render deployment steps](docs/RENDER-DEPLOYMENT.md). The repository includes `render.yaml`, a pinned Node 24 runtime, `/healthz`, persistent `DATABASE_PATH` support, Render HTTPS origin detection, and admin-only production bootstrap. Production creates no demo agents and never logs the initial password.
+
+## Deploy on Oracle Always Free
+
+Follow [Oracle VM deployment steps](docs/ORACLE-DEPLOYMENT.md) for Ubuntu 24.04, Node 24, Caddy HTTPS, systemd startup and local daily SQLite backups. Deployment templates and the installer are in `deploy/oracle/`. Provisioning and live validation require your Oracle VM and a hostname pointing to it.

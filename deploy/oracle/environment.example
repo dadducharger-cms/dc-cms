@@ -1,0 +1,9 @@
+NODE_ENV=production
+HOST=127.0.0.1
+PORT=3000
+COOKIE_SECURE=true
+DATABASE_PATH=/var/lib/dc-cms/uocms.sqlite
+PUBLIC_BASE_URL=https://support.example.com
+ADMIN_EMAIL=admin@example.com
+# Replace with your own unique 16–200 character password; keep this file root-only.
+INITIAL_PASSWORD="REPLACE_WITH_YOUR_OWN_PASSWORD"
