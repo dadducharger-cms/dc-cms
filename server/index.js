@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { deploymentEnvironment, seedProduction } from './deployment.js';
 import { SocialMessaging, socialConfig } from './social.js';
 import { IntegrationSettings } from './integration-settings.js';
 import { Product } from './product.js';
@@ -9,9 +10,10 @@ import { fileURLToPath } from 'node:url';
 import { resolve, extname } from 'node:path';
 import { Store, passwordMatches } from './store.js';
 const root=fileURLToPath(new URL('../',import.meta.url));
-export function createApp({dbPath=resolve(root,'data/uocms.sqlite'),password=process.env.INITIAL_PASSWORD,clock=Date.now,waConfig=whatsappConfig(),fetcher=fetch,fbConfig=socialConfig('FACEBOOK'),igConfig=socialConfig('INSTAGRAM')}={}){
+export function createApp({dbPath=process.env.DATABASE_PATH||resolve(root,'data/uocms.sqlite'),password=process.env.INITIAL_PASSWORD,clock=Date.now,waConfig=whatsappConfig(),fetcher=fetch,fbConfig=socialConfig('FACEBOOK'),igConfig=socialConfig('INSTAGRAM'),production=process.env.NODE_ENV==='production',adminEmail=process.env.ADMIN_EMAIL}={}){
  if(dbPath!==':memory:')mkdirSync(resolve(dbPath,'..'),{recursive:true});const store=new Store(dbPath,clock);
- if(!store.get('SELECT id FROM users LIMIT 1')){password ||=randomBytes(15).toString('base64url');store.seed(password);console.log(`Initial account password: ${password}\nAdmin: admin@uocms.local | Agents: aisha@uocms.local, bilal@uocms.local, sara@uocms.local`)}
+ if(production){try{seedProduction(store,password,adminEmail)}catch(error){store.close();throw error}}
+ else if(!store.get('SELECT id FROM users LIMIT 1')){password ||=randomBytes(15).toString('base64url');store.seed(password);console.log(`Initial account password: ${password}\nAdmin: admin@uocms.local | Agents: aisha@uocms.local, bilal@uocms.local, sara@uocms.local`)}
  const wa=new WhatsApp(store,waConfig,fetcher);
  const facebook=new SocialMessaging(store,'FACEBOOK',fbConfig,fetcher),instagram=new SocialMessaging(store,'INSTAGRAM',igConfig,fetcher);
  const channels={whatsapp:wa,facebook,instagram};
@@ -23,6 +25,7 @@ export function createApp({dbPath=resolve(root,'data/uocms.sqlite'),password=pro
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Content-Security-Policy',"default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'self'");
  try{
  const url=new URL(req.url,'http://localhost'),path=url.pathname;if(path==='/widget')res.setHeader('Content-Security-Policy',"default-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors *");
+ if(path==='/healthz'&&req.method==='GET'){store.get('SELECT 1');return send(200,{ok:true})}
  if(/^\/webhooks\/(whatsapp|facebook|instagram)$/.test(path)){const channel=channels[path.split('/').pop()];
  if(req.method==='GET'){if(!channel.config.verifyToken||url.searchParams.get('hub.mode')!=='subscribe'||url.searchParams.get('hub.verify_token')!==channel.config.verifyToken)return send(403,{error:'Verification failed'});channel.s.run('UPDATE wa_health SET verified=? WHERE id=1',clock());res.writeHead(200,{'Content-Type':'text/plain','Cache-Control':'no-store'});return res.end(url.searchParams.get('hub.challenge')||'');}
  if(req.method==='POST'){if(!channel.ready())return send(503,{error:'Integration not configured'});let size=0;const chunks=[];for await(const chunk of req){size+=chunk.length;if(size>1048576)return send(413,{error:'Request too large'});chunks.push(chunk)}const raw=Buffer.concat(chunks);if(!channel.verify(req.headers['x-hub-signature-256'],raw))return send(401,{error:'Invalid signature'});channel.receive(raw);return send(200,{received:true});}
@@ -65,4 +68,4 @@ export function createApp({dbPath=resolve(root,'data/uocms.sqlite'),password=pro
  const ingestTimer=setInterval(()=>{try{Object.values(channels).forEach(channel=>channel.drainInbox())}catch{console.error('Inbound worker error; persisted events retained')}},100);ingestTimer.unref();
  const timer=setInterval(()=>{try{for(const channel of Object.values(channels))void channel.tick().catch(()=>console.error('Messaging worker failed; persisted work will be retried.'));store.tick();store.run('DELETE FROM sessions WHERE expires<=?',clock());for(const [k,v]of buckets)if(v.until<clock())buckets.delete(k)}catch(e){console.error('Timer worker failed',e)}},1000);timer.unref();store.tick();server.on('close',()=>{clearInterval(timer);clearInterval(ingestTimer);const finish=()=>{if(Object.values(channels).some(channel=>channel.busy))setTimeout(finish,25);else store.close()};finish()});return {server,store,wa,product,channels};
 }
-if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const {server}=createApp();for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>server.close());server.listen({port:Number(process.env.PORT||3000),host:process.env.HOST||'127.0.0.1',backlog:4096},()=>console.log(`UOCMS running at http://localhost:${process.env.PORT||3000}`));}
+if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){const deployment=deploymentEnvironment();if(deployment.publicUrl)process.env.PUBLIC_BASE_URL=deployment.publicUrl;const {server}=createApp();for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>server.close());server.listen({port:Number(process.env.PORT||3000),host:process.env.HOST||'127.0.0.1',backlog:4096},()=>console.log(`UOCMS running at http://localhost:${process.env.PORT||3000}`));}

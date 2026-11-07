@@ -108,3 +108,7 @@ Home opens the role-scoped dashboard: admins see store totals, agents, channels 
 Use the [integration guide](deliverables/UOCSM-Daddu-Charger-Integration-Guide.docx) for the separate Next.js storefront handoff and step-by-step Meta setup. Admins can configure channels in **Integrations → Configure connection** without editing server files. Saving credentials does not validate a live connection; complete the guide’s acceptance tests.
 
 Stored integration credentials are encrypted with `data/integration.key`. Back up this restricted-access key separately alongside database backups; the database alone cannot restore saved credentials. Existing environment-based configuration remains supported.
+
+## Deploy on Render
+
+Follow [Render deployment steps](docs/RENDER-DEPLOYMENT.md). The repository includes `render.yaml`, a pinned Node 24 runtime, `/healthz`, persistent `DATABASE_PATH` support, Render HTTPS origin detection, and admin-only production bootstrap. Production creates no demo agents and never logs the initial password.

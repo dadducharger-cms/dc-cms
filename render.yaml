@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: dc-cms
+    runtime: node
+    region: singapore
+    plan: starter
+    branch: main
+    buildCommand: npm run check && NODE_ENV=test npm test
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: off
+    numInstances: 1
+    disk:
+      name: dc-cms-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: DATABASE_PATH
+        value: /var/data/uocms.sqlite
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: INITIAL_PASSWORD
+        sync: false
