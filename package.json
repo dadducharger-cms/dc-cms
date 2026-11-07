@@ -1,0 +1,17 @@
+{
+  "name": "uocms",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "dev": "node --env-file-if-exists=.env --watch server/index.js",
+    "test": "node --test test/*.test.js",
+    "check": "node --check server/index.js && node --check server/store.js && node --check public/app.js && node --check server/product.js && node --check server/whatsapp.js && node --check public/product-ui.js",
+    "backup": "node scripts/backup.js",
+    "load-test": "node scripts/load-test.js"
+  }
+}

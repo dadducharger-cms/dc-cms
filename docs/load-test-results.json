@@ -1,0 +1,41 @@
+{
+  "testedAt": "2026-11-07T09:43:10.188Z",
+  "uniqueMessages": 12000,
+  "expectedConversations": 6000,
+  "channels": [
+    "WhatsApp",
+    "Facebook",
+    "Instagram"
+  ],
+  "concurrentClients": 2000,
+  "acceptedRequests": 13200,
+  "transportRetries": 4310,
+  "rewrappedDuplicateRequests": 1200,
+  "beforeAbruptCrash": {
+    "messages": 1500,
+    "pending": 10500
+  },
+  "recoveredMessages": 10500,
+  "missingMessages": 0,
+  "duplicateMessages": 0,
+  "unassignedConversations": 0,
+  "acknowledgmentSeconds": 2.88,
+  "totalSeconds": 10.89,
+  "assignments": [
+    {
+      "agent_id": "aisha",
+      "count": 2000
+    },
+    {
+      "agent_id": "bilal",
+      "count": 2000
+    },
+    {
+      "agent_id": "sara",
+      "count": 2000
+    }
+  ],
+  "integrity": "ok",
+  "note": "Synthetic signed HTTP traffic, persistent SQLite, SIGKILL/restart; no Meta calls. Concurrent clients are in-flight requests, not guaranteed simultaneous socket arrival.",
+  "p95SuccessfulAttemptMs": 601.3
+}

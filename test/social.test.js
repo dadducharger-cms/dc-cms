@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { Store } from '../server/store.js';
+import { SocialMessaging } from '../server/social.js';
+const config={token:'test',phoneId:'111',secret:'secret',verifyToken:'verify',version:'v23.0'};
+for(const channel of ['FACEBOOK','INSTAGRAM'])test(`${channel}: scoped identity, echo suppression, text send and durable receipt`,async t=>{const s=new Store(':memory:');s.seed('test');t.after(()=>s.close());let requested;
+ const adapter=new SocialMessaging(s,channel,config,async(url,options)=>{requested={url,body:JSON.parse(options.body)};return {ok:true,json:async()=>({message_id:'out-1'})}});
+ const event={object:channel==='FACEBOOK'?'page':'instagram',entry:[{id:'111',messaging:[{sender:{id:'222'},recipient:{id:'111'},timestamp:Date.now(),message:{mid:'in-1',text:'Do you have a controller?'}}]}]};adapter.receive(Buffer.from(JSON.stringify(event)));await adapter.tick();adapter.ingest(event);assert.equal(s.get('SELECT count(*) n FROM messages').n,1);const c=s.get('SELECT * FROM conversations');assert.equal(c.source,channel);assert.equal(c.widget_token,null);assert.equal(s.serialize(c,{role:'AGENT'}).source,undefined);
+ event.entry[0].messaging[0].message.is_echo=true;adapter.ingest(event);assert.equal(s.get('SELECT count(*) n FROM messages').n,1);adapter.queue(c,{id:'aisha'},'We can check that for you.','reply-1');await adapter.tick();assert.ok(requested.url.includes(channel==='FACEBOOK'?'graph.facebook.com':'graph.instagram.com'));assert.equal(requested.body.recipient.id,'222');assert.equal(s.get('SELECT status FROM conversations').status,'OPEN');adapter.receipt('out-1','READ',4);adapter.receipt('out-1','DELIVERED',3);assert.equal(s.get("SELECT delivery FROM messages WHERE direction='OUTBOUND'").delivery,'READ');});

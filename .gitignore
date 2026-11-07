@@ -1,0 +1,12 @@
+data/*
+!data/.gitkeep
+.env
+node_modules/
+backups/
+
+# Local secrets and operating-system files
+.env.*
+!.env.example
+.DS_Store
+*.key
+*.pem
